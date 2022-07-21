@@ -17,16 +17,22 @@ class ExcerciseActivity : AppCompatActivity() {
     private var exerciseTimer: CountDownTimer? = null
     private var exerciseProgress = 0
 
+    private var exerciseList: ArrayList<ExerciseModel>? = null
+    private var currentExercisePosition = -1
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityExcerciseBinding.inflate(layoutInflater)
-        setContentView(binding?.root)
 
         setSupportActionBar(binding?.tbExcersise)
 
         if (supportActionBar != null) {
             supportActionBar?.setDisplayHomeAsUpEnabled(true)
         }
+
+        setContentView(binding?.root)
+
+        exerciseList = Constants.defaultexerciseList()
 
         binding?.tbExcersise?.setNavigationOnClickListener {
             onBackPressed()
@@ -36,26 +42,18 @@ class ExcerciseActivity : AppCompatActivity() {
     }
 
     private fun setupRestView() {
+        binding?.flRestView?.visibility = View.VISIBLE
+        binding?.tvTitle?.visibility = View.VISIBLE
+        binding?.tvExerciseName?.visibility = View.INVISIBLE
+        binding?.flExerciseView?.visibility = View.INVISIBLE
+        binding?.ivImage?.visibility = View.INVISIBLE
+
         if (restTimer != null) {
             restTimer?.cancel()
             restProgress = 0
         }
 
         setRestProgressBar()
-    }
-
-    private fun setupExerciseView(){
-        binding?.flProgressBar?.visibility = View.INVISIBLE
-        binding?.tvTitle?.text = "Exercise Name"
-        binding?.flExerciseView?.visibility = View.VISIBLE
-
-        if(exerciseTimer != null)
-        {
-            exerciseTimer?.cancel()
-            exerciseProgress = 0
-        }
-
-        setExerciseProgressBar()
     }
 
     private fun setRestProgressBar() {
@@ -68,12 +66,28 @@ class ExcerciseActivity : AppCompatActivity() {
             }
 
             override fun onFinish() {
-                binding?.tvTimer?.text = "0"
-                binding?.pbProgressBar?.progress = 0
-
+                currentExercisePosition++
                 setupExerciseView()
             }
         }.start()
+    }
+
+    private fun setupExerciseView() {
+        binding?.flRestView?.visibility = View.INVISIBLE
+        binding?.tvTitle?.visibility = View.INVISIBLE
+        binding?.tvExerciseName?.visibility = View.VISIBLE
+        binding?.flExerciseView?.visibility = View.VISIBLE
+        binding?.ivImage?.visibility = View.VISIBLE
+
+        if (exerciseTimer != null) {
+            exerciseTimer?.cancel()
+            exerciseProgress = 0
+        }
+
+        binding?.ivImage?.setImageResource(exerciseList!![currentExercisePosition].getImage())
+        binding?.tvExerciseName?.text = exerciseList!![currentExercisePosition].getName()
+
+        setExerciseProgressBar()
     }
 
     private fun setExerciseProgressBar() {
@@ -87,19 +101,20 @@ class ExcerciseActivity : AppCompatActivity() {
             }
 
             override fun onFinish() {
-                binding?.tvTimerExercise?.text = "0"
-                binding?.pbExercise?.progress = 0
-
-                Toast.makeText(
-                    this@ExcerciseActivity,
-                    "30 sec are over, lets go to rest view",
-                    Toast.LENGTH_LONG
-                ).show()
+                if (currentExercisePosition + 1 < exerciseList!!.size) {
+                    setupRestView()
+                } else {
+                    Toast.makeText(
+                        this@ExcerciseActivity,
+                        "Congratulations you have completed 7 minutes workout.",
+                        Toast.LENGTH_SHORT
+                    )
+                        .show()
+                }
             }
 
         }.start()
     }
-
 
     override fun onDestroy() {
         super.onDestroy()
@@ -109,8 +124,7 @@ class ExcerciseActivity : AppCompatActivity() {
             restProgress = 0
         }
 
-        if(exerciseTimer != null)
-        {
+        if (exerciseTimer != null) {
             exerciseTimer?.cancel()
             exerciseProgress = 0
         }
